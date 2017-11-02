@@ -18,23 +18,36 @@ uses:
 # searchtext.submit()
 
 from internetarchive import search_items
-from internetarchive import get_session
+#from internetarchive import get_session
 from internetarchive import get_item
 from internetarchive import File
+import easygui
+import sys
 
+msg = "Enter your search criteria"
+title = "Archive.org Downloader"
+fieldNames = ["Search value","File type", "Filename includes (leave blank for all)"]
+fieldValues = []  # we start with blanks for the values
+fieldValues = easygui.multenterbox(msg,title, fieldNames)
+searchvalue = fieldValues[0]
+filetype = fieldValues[1]
+filenameincludes = fieldValues[2]
 
-s = get_session()
-search_results = search_items("magazine")
+#s = get_session()
+search_results = search_items(searchvalue)
 for i in search_results:
-    identifier = i['identifier']
-    item = get_item(identifier)
-    for file in item.files:
-        format = str(file['format']).lower()
-        name = str(file['name'])
-        #print name + ' -- ' + format
-        if format.find('pdf') != -1: #and name.lower().find('byte') != -1:
-            fi = File(item, name)
-            try:
+    try:
+        identifier = i['identifier']
+        item = get_item(identifier)
+        for file in item.files:
+            format = str(file['format']).lower()
+            name = str(file['name'])
+            #print name + ' -- ' + format
+            if format.find(filetype) != -1:
+                if filenameincludes:
+                    if name.lower().find(filenameincludes) == -1:
+                        continue
+                fi = File(item, name)
                 fi.download(destdir='./download/' , verbose=True)
-            except:
-                pass
+    except:
+        print sys.exc_info()[0]
